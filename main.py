@@ -1,10 +1,10 @@
 import os
 import telebot
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from pymongo import MongoClient
 import threading
 
-# --- সেটিংস ---
+# --- কনফিগারেশন ---
 API_TOKEN = '8762986628:AAFDHx75rzOBJGWFp8ACTGliil2T4rItlbw'
 MONGODB_URI = "mongodb+srv://Musfiqur_rahman:musfiqur@cluster0.qxu7ycp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
@@ -21,43 +21,47 @@ def start(message):
     first_name = message.from_user.first_name
     
     if not users_collection.find_one({"user_id": user_id}):
-        users_collection.insert_one({
-            "user_id": user_id, 
-            "username": first_name, 
-            "balance": 0
-        })
+        users_collection.insert_one({"user_id": user_id, "username": first_name, "balance": 0})
 
     markup = telebot.types.InlineKeyboardMarkup()
     web_app_url = "https://reward-bee-bot.onrender.com" 
-    button = telebot.types.InlineKeyboardButton(
-        text="💰 কাজ শুরু করুন", 
-        web_app=telebot.types.WebAppInfo(url=web_app_url)
-    )
+    button = telebot.types.InlineKeyboardButton(text="💰 কাজ শুরু করুন", web_app=telebot.types.WebAppInfo(url=web_app_url))
     markup.add(button)
     bot.send_message(message.chat.id, f"স্বাগতম {first_name}!", reply_markup=markup)
 
-# --- ফ্লাস্ক রুট (কোনো ডাটা পাস করা হবে না, শুধু HTML ফাইল) ---
+# --- ফ্লাস্ক রুট ---
 @app.route('/')
 def index():
+    # এটি শুধু আপনার index.html ফাইলটি দেখাবে
     return render_template('index.html')
 
-# API: ইউজার ডাটা পাওয়ার জন্য
+# API: ইউজার ডাটা পাঠানোর জন্য
 @app.route('/api/get_user/<user_id>')
 def get_user(user_id):
-    user = users_collection.find_one({"user_id": user_id})
-    if user:
-        return jsonify({
-            "status": "success", 
-            "name": user['username'], 
-            "balance": user['balance'],
-            "user_id": user['user_id']
-        })
-    return jsonify({"status": "error"}), 404
+    try:
+        user = users_collection.find_one({"user_id": str(user_id)})
+        if user:
+            return jsonify({
+                "status": "success", 
+                "name": user['username'], 
+                "balance": user['balance'],
+                "user_id": user['user_id']
+            })
+        return jsonify({"status": "error", "message": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
+# বোট পোলিং রান করার ফাংশন
 def run_bot():
-    bot.infinity_polling()
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print(f"Bot error: {e}")
 
 if __name__ == "__main__":
+    # বোটকে আলাদা থ্রেডে চালু করা
     threading.Thread(target=run_bot, daemon=True).start()
+    
+    # ফ্লাস্ক রান করা (Render পোর্টে)
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
