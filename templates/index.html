@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reward Bee - Earn & Refer</title>
+    <title>Reward Bee</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>[v-cloak] { display: none; } .nav-shadow { box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3); }</style>
+    <style>[v-cloak] { display: none; }</style>
 </head>
 <body class="bg-slate-900 text-white font-sans pb-28">
     <div id="app" v-cloak>
@@ -36,11 +36,11 @@
 
             <div class="grid grid-cols-2 gap-4 text-center">
                 <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold">দৈনিক লিমিট</p>
-                    <p class="text-xl font-black">{{ user.daily_count || 0 }}/50</p>
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">ইউজার আইডি</p>
+                    <p class="text-sm font-black">{{ user.id }}</p>
                 </div>
                 <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold">মোট আয়</p>
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">ব্যালেন্স</p>
                     <p class="text-xl font-black">৳{{ user.balance }}</p>
                 </div>
             </div>
@@ -60,22 +60,9 @@
                         <option value="Bkash">বিকাশ</option>
                         <option value="Nagad">নগদ</option>
                     </select>
-                    <input type="number" v-model="withdrawNum" placeholder="বিকাশ/নগদ নাম্বার" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
-                    <input type="number" v-model="withdrawAmt" placeholder="টাকার পরিমাণ (মিনিমাম ৫০০)" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
+                    <input type="number" v-model="withdrawNum" placeholder="নাম্বার" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
+                    <input type="number" v-model="withdrawAmt" placeholder="পরিমাণ (মিনিমাম ৫০০)" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
                     <button @click="handleWithdraw" class="w-full bg-blue-600 py-4 rounded-xl font-bold">রিকোয়েস্ট পাঠান</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Profile Page -->
-        <div v-if="activePage === 'profile'" class="p-5 space-y-5">
-            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 text-center">
-                <div class="w-16 h-16 bg-slate-700 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl border border-green-500/50">👤</div>
-                <h3 class="text-xl font-bold">{{ user.name }}</h3>
-                <p class="text-slate-400 text-xs mb-4">ইউজার আইডি: <span class="text-green-500">{{ user.id }}</span></p>
-                <div class="bg-slate-900/50 p-4 rounded-2xl">
-                    <p class="text-sm text-slate-500">আপনার বর্তমান ব্যালেন্স</p>
-                    <p class="text-2xl text-green-400 font-bold">৳{{ user.balance }}</p>
                 </div>
             </div>
         </div>
@@ -84,19 +71,15 @@
         <div v-if="activePage === 'task'" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-6 text-center">
              <div class="text-6xl font-black mb-4 text-green-500">{{ timer }}s</div>
              <h3 class="text-xl font-bold">অ্যাড লোড হচ্ছে...</h3>
-             <p class="text-slate-400 mt-2">টাইমার শেষ হওয়া পর্যন্ত অপেক্ষা করুন</p>
         </div>
 
         <!-- Bottom Navigation -->
-        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 nav-shadow z-50">
-            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
+        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 z-50">
+            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1">
                 <i class="fa-solid fa-house-chimney text-xl"></i><span>হোম</span>
             </button>
-            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
+            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1">
                 <i class="fa-solid fa-wallet text-xl"></i><span>পেমেন্ট</span>
-            </button>
-            <button @click="activePage = 'profile'" :class="activePage === 'profile' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
-                <i class="fa-solid fa-user text-xl"></i><span>প্রোফাইল</span>
             </button>
         </div>
     </div>
@@ -108,55 +91,43 @@
                 const tg = window.Telegram.WebApp;
                 const activePage = ref('home');
                 const timer = ref(10);
-                const user = ref({ id: '...', name: 'Loading...', balance: 0, daily_count: 0 });
+                const user = ref({ id: '...', name: 'Loading...', balance: 0 });
 
                 const withdrawMethod = ref('');
                 const withdrawNum = ref('');
                 const withdrawAmt = ref('');
 
-                onMounted(() => {
+                onMounted(async () => {
                     tg.expand();
                     const tgUser = tg.initDataUnsafe.user;
                     if (tgUser) {
-                        fetchUser(tgUser.id);
+                        try {
+                            const res = await fetch(`/api/get_user/${tgUser.id}`);
+                            const data = await res.json();
+                            if (data.status === "success") {
+                                user.value = { id: data.user_id, name: data.name, balance: data.balance };
+                            }
+                        } catch (e) { console.error("Error loading user", e); }
                     }
                 });
 
-                const fetchUser = async (userId) => {
-                    const res = await fetch(`/api/get_user/${userId}`);
-                    const data = await res.json();
-                    if (data.status === "success") {
-                        user.value = {
-                            id: userId,
-                            name: data.name,
-                            balance: data.balance,
-                            daily_count: 0
-                        };
-                    }
-                };
-
                 const startTask = () => {
                     activePage.value = 'task';
-                    let countdown = setInterval(() => {
+                    let interval = setInterval(() => {
                         timer.value--;
                         if (timer.value <= 0) {
-                            clearInterval(countdown);
-                            completeTask();
+                            clearInterval(interval);
+                            user.value.balance += 5;
+                            alert("৳৫ যোগ হয়েছে!");
+                            timer.value = 10;
+                            activePage.value = 'home';
                         }
                     }, 1000);
                 };
 
-                const completeTask = () => {
-                    user.value.balance += 5; // ৫ টাকা যোগ
-                    alert("অভিনন্দন! ৫ টাকা যোগ হয়েছে।");
-                    timer.value = 10;
-                    activePage.value = 'home';
-                };
-
                 const handleWithdraw = () => {
-                    if (withdrawAmt.value < 500) return alert("মিনিমাম ৫০০ টাকা লাগবে!");
-                    if (withdrawAmt.value > user.value.balance) return alert("ব্যালেন্স নেই!");
-                    alert("অনুরোধ পাঠানো হয়েছে!");
+                    if (withdrawAmt.value < 500) return alert("মিনিমাম ৫০০ ৳ লাগবে!");
+                    alert("অনুরোধ সফল!");
                     user.value.balance -= withdrawAmt.value;
                 };
 
