@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>[v-cloak] { display: none; } .nav-shadow { box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3); }</style>
 </head>
 <body class="bg-slate-900 text-white font-sans pb-28">
@@ -26,9 +27,6 @@
             </div>
         </div>
 
-        <!-- Ad Placement: Home -->
-        <div v-if="config.ads.home && activePage === 'home'" class="p-2" v-html="config.ads.home"></div>
-
         <!-- Home Page -->
         <div v-if="activePage === 'home'" class="p-5 space-y-6">
             <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-3xl shadow-xl">
@@ -38,12 +36,12 @@
 
             <div class="grid grid-cols-2 gap-4 text-center">
                 <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold">ঘণ্টার লিমিট</p>
-                    <p class="text-xl font-black">{{ user.hourly_count || 0 }}/{{ config.hourly }}</p>
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">দৈনিক লিমিট</p>
+                    <p class="text-xl font-black">{{ user.daily_count || 0 }}/50</p>
                 </div>
                 <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold">দৈনিক লিমিট</p>
-                    <p class="text-xl font-black">{{ user.daily_count || 0 }}/{{ config.daily }}</p>
+                    <p class="text-slate-400 text-[10px] uppercase font-bold">মোট আয়</p>
+                    <p class="text-xl font-black">৳{{ user.balance }}</p>
                 </div>
             </div>
 
@@ -62,43 +60,37 @@
                         <option value="Bkash">বিকাশ</option>
                         <option value="Nagad">নগদ</option>
                     </select>
-                    <input type="number" v-model="withdrawNum" placeholder="নাম্বার" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
-                    <input type="number" v-model="withdrawAmt" :placeholder="'মিনিমাম ৳' + config.minW" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
+                    <input type="number" v-model="withdrawNum" placeholder="বিকাশ/নগদ নাম্বার" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
+                    <input type="number" v-model="withdrawAmt" placeholder="টাকার পরিমাণ (মিনিমাম ৫০০)" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700">
                     <button @click="handleWithdraw" class="w-full bg-blue-600 py-4 rounded-xl font-bold">রিকোয়েস্ট পাঠান</button>
                 </div>
             </div>
         </div>
 
-        <!-- Profile & Referral Page -->
+        <!-- Profile Page -->
         <div v-if="activePage === 'profile'" class="p-5 space-y-5">
             <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 text-center">
                 <div class="w-16 h-16 bg-slate-700 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl border border-green-500/50">👤</div>
                 <h3 class="text-xl font-bold">{{ user.name }}</h3>
-                <p class="text-slate-400 text-xs mb-4">রেফার আইডি: <span class="text-green-500">{{ user.telegram_id }}</span></p>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-900/50 p-3 rounded-2xl">
-                        <p class="text-[10px] text-slate-500">মোট আয়</p>
-                        <p class="text-blue-400 font-bold">৳{{ user.total_earn }}</p>
-                    </div>
-                    <div class="bg-slate-900/50 p-3 rounded-2xl">
-                        <p class="text-[10px] text-slate-500">রেফারেল</p>
-                        <p class="text-purple-400 font-bold">{{ user.referrals.length }}</p>
-                    </div>
+                <p class="text-slate-400 text-xs mb-4">ইউজার আইডি: <span class="text-green-500">{{ user.id }}</span></p>
+                <div class="bg-slate-900/50 p-4 rounded-2xl">
+                    <p class="text-sm text-slate-500">আপনার বর্তমান ব্যালেন্স</p>
+                    <p class="text-2xl text-green-400 font-bold">৳{{ user.balance }}</p>
                 </div>
             </div>
         </div>
 
         <!-- Task Overlay -->
         <div v-if="activePage === 'task'" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-6 text-center">
-             <div v-if="config.ads.task" class="mb-8 w-full" v-html="config.ads.task"></div>
-             <div class="text-4xl font-black mb-4 text-green-500">{{ timer }}s</div>
+             <div class="text-6xl font-black mb-4 text-green-500">{{ timer }}s</div>
              <h3 class="text-xl font-bold">অ্যাড লোড হচ্ছে...</h3>
+             <p class="text-slate-400 mt-2">টাইমার শেষ হওয়া পর্যন্ত অপেক্ষা করুন</p>
         </div>
 
         <!-- Bottom Navigation -->
-        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 z-50">
+        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 nav-shadow z-50">
             <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
-                <i class="fa-solid fa-house text-xl"></i><span>হোম</span>
+                <i class="fa-solid fa-house-chimney text-xl"></i><span>হোম</span>
             </button>
             <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
                 <i class="fa-solid fa-wallet text-xl"></i><span>পেমেন্ট</span>
@@ -113,139 +105,38 @@
         const { createApp, ref, onMounted } = Vue;
         createApp({
             setup() {
+                const tg = window.Telegram.WebApp;
                 const activePage = ref('home');
                 const timer = ref(10);
-                
-                // সার্ভার থেকে আসা ডাটা সরাসরি রেন্ডার হবে
-                const user = ref({{ user | tojson }});
-                const config = ref({{ config | tojson }});
+                const user = ref({ id: '...', name: 'Loading...', balance: 0, daily_count: 0 });
 
                 const withdrawMethod = ref('');
                 const withdrawNum = ref('');
                 const withdrawAmt = ref('');
-
-                const startTask = () => {
-                    if (user.value.daily_count >= config.value.daily) return alert("দৈনিক লিমিট শেষ!");
-                    activePage.value = 'task';
-                    const link = config.value.links[Math.floor(Math.random() * config.value.links.length)];
-                    window.open(link, '_blank');
-
-                    let countdown = setInterval(() => {
-                        timer.value--;
-                        if (timer.value <= 0) {
-                            clearInterval(countdown);
-                            updateBalance();
-                        }
-                    }, 1000);
-                };
-
-                const updateBalance = async () => {
-                    const res = await fetch('/api/complete_task', { method: 'POST' });
-                    const data = await res.json();
-                    if (data.success) {
-                        user.value.balance = data.new_balance;
-                        user.value.daily_count = data.new_daily;
-                        alert("৳" + config.value.reward + " যোগ হয়েছে!");
-                    }
-                    timer.value = 10;
-                    activePage.value = 'home';
-                };
-
-                const handleWithdraw = async () => {
-                    if (withdrawAmt.value < config.value.minW) return alert("মিনিমাম উইথড্র ৳" + config.value.minW);
-                    const res = await fetch('/api/withdraw', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({amt: withdrawAmt.value, num: withdrawNum.value, method: withdrawMethod.value})
-                    });
-                    const data = await res.json();
-                    if(data.success) {
-                        user.value.balance -= withdrawAmt.value;
-                        alert("পেমেন্ট রিকোয়েস্ট পাঠানো হয়েছে!");
-                    } else {
-                        alert(data.error);
-                    }
-                };
-
-                return { activePage, user, config, timer, withdrawMethod, withdrawNum, withdrawAmt, startTask, handleWithdraw }
-            }
-        }).mount('#app');
-    </script>
-</body>
-</html>
-        <div class="relative w-32 h-32 flex items-center justify-center mb-6">
-                <svg class="w-full h-full transform -rotate-90">
-                    <circle cx="64" cy="64" r="60" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-800" />
-                    <circle cx="64" cy="64" r="60" stroke="currentColor" stroke-width="8" fill="transparent" :stroke-dasharray="377" :stroke-dashoffset="377 - (timer/10)*377" class="text-green-500 transition-all duration-1000 ease-linear" />
-                </svg>
-                <span class="absolute text-3xl font-black">{{ timer }}</span>
-             </div>
-             <h3 class="text-xl font-bold mb-2">অ্যাড দেখা হচ্ছে...</h3>
-             <p class="text-slate-400 text-sm">টাইমার শেষ হওয়া পর্যন্ত অপেক্ষা করুন।</p>
-        </div>
-
-        <!-- Bottom Navigation -->
-        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 nav-shadow z-50">
-            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px] transition-all duration-300">
-                <i class="fa-solid fa-house-chimney text-xl"></i><span>হোম</span>
-            </button>
-            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px] transition-all duration-300">
-                <i class="fa-solid fa-hand-holding-dollar text-xl"></i><span>পেমেন্ট</span>
-            </button>
-            <button @click="activePage = 'profile'" :class="activePage === 'profile' ? 'text-green-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px] transition-all duration-300">
-                <i class="fa-solid fa-user-astronaut text-xl"></i><span>প্রোফাইল</span>
-            </button>
-        </div>
-
-    </div>
-
-    <script>
-        const { createApp, ref, onMounted, watch } = Vue;
-
-        createApp({
-            setup() {
-                const activePage = ref('home');
-                const timer = ref(10);
-                const user = ref({ id: 10293, name: "Musfiqur", balance: 850, total: 2500 });
-                
-                // পেমেন্ট ফিল্ডস
-                const withdrawMethod = ref('');
-                const withdrawNum = ref('');
-                const withdrawAmt = ref('');
-
-                // রেফারেল ডেমো ডাটা
-                const referrals = ref([
-                    { id: 1, name: "Rakib Ahmed", date: "02 Apr, 2026" },
-                    { id: 2, name: "Sabbir Hossain", date: "01 Apr, 2026" },
-                    { id: 3, name: "Tanvir Hasan", date: "30 Mar, 2026" },
-                    { id: 4, name: "Arif Khan", date: "28 Mar, 2026" }
-                ]);
-
-                const config = ref({
-                    links: [], reward: 5, minW: 500, hourly: 10, daily: 50,
-                    ads: { home: "", task: "", pay: "", prof: "" }
-                });
-
-                const hourlyCount = ref(0);
-                const dailyCount = ref(0);
 
                 onMounted(() => {
-                    const saved = localStorage.getItem('beeConfig');
-                    if (saved) config.value = JSON.parse(saved);
-                    
-                    hourlyCount.value = parseInt(localStorage.getItem('h_count') || 0);
-                    dailyCount.value = parseInt(localStorage.getItem('d_count') || 0);
+                    tg.expand();
+                    const tgUser = tg.initDataUnsafe.user;
+                    if (tgUser) {
+                        fetchUser(tgUser.id);
+                    }
                 });
 
+                const fetchUser = async (userId) => {
+                    const res = await fetch(`/api/get_user/${userId}`);
+                    const data = await res.json();
+                    if (data.status === "success") {
+                        user.value = {
+                            id: userId,
+                            name: data.name,
+                            balance: data.balance,
+                            daily_count: 0
+                        };
+                    }
+                };
+
                 const startTask = () => {
-                    if (config.value.links.length === 0) return alert("অ্যাডমিন লিংক যোগ করেনি!");
-                    if (dailyCount.value >= config.value.daily) return alert("দৈনিক লিমিট শেষ!");
-                    if (hourlyCount.value >= config.value.hourly) return alert("ঘণ্টার লিমিট শেষ!");
-
                     activePage.value = 'task';
-                    const link = config.value.links[Math.floor(Math.random() * config.value.links.length)];
-                    window.open(link, '_blank');
-
                     let countdown = setInterval(() => {
                         timer.value--;
                         if (timer.value <= 0) {
@@ -256,70 +147,22 @@
                 };
 
                 const completeTask = () => {
-                    user.value.balance += config.value.reward;
-                    hourlyCount.value++;
-                    dailyCount.value++;
-                    localStorage.setItem('h_count', hourlyCount.value);
-                    localStorage.setItem('d_count', dailyCount.value);
-                    
-                    alert("৳" + config.value.reward + " ব্যালেন্সে যোগ হয়েছে!");
+                    user.value.balance += 5; // ৫ টাকা যোগ
+                    alert("অভিনন্দন! ৫ টাকা যোগ হয়েছে।");
                     timer.value = 10;
                     activePage.value = 'home';
                 };
 
                 const handleWithdraw = () => {
-                    if (!withdrawMethod.value || !withdrawNum.value || !withdrawAmt.value) {
-                        return alert("সবগুলো ঘর সঠিক তথ্য দিয়ে পূরণ করুন!");
-                    }
-                    if (withdrawAmt.value < config.value.minW) {
-                        return alert("মিনিমাম উইথড্র ৳" + config.value.minW);
-                    }
-                    if (withdrawAmt.value > user.value.balance) {
-                        return alert("আপনার পর্যাপ্ত ব্যালেন্স নেই!");
-                    }
-
-                    alert("পেমেন্ট রিকোয়েস্ট সফল হয়েছে! ২৪ ঘণ্টার মধ্যে পেমেন্ট পাবেন।");
+                    if (withdrawAmt.value < 500) return alert("মিনিমাম ৫০০ টাকা লাগবে!");
+                    if (withdrawAmt.value > user.value.balance) return alert("ব্যালেন্স নেই!");
+                    alert("অনুরোধ পাঠানো হয়েছে!");
                     user.value.balance -= withdrawAmt.value;
-                    withdrawMethod.value = ""; withdrawNum.value = ""; withdrawAmt.value = "";
                 };
 
-                return {
-                    activePage, user, config, timer, hourlyCount, dailyCount, referrals,
-                    withdrawMethod, withdrawNum, withdrawAmt,
-                    startTask, handleWithdraw
-                }
+                return { activePage, user, timer, withdrawMethod, withdrawNum, withdrawAmt, startTask, handleWithdraw }
             }
         }).mount('#app');
     </script>
 </body>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // টেলিগ্রাম থেকে ইউজার আইডি নেওয়া
-    const user = tg.initDataUnsafe.user;
-
-    if (user) {
-        const userId = user.id;
-
-        // আপনার API থেকে ইউজারের ডাটা (ব্যালেন্স ও নাম) নিয়ে আসা
-        fetch(`/api/get_user/${userId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    // আপনার HTML এ যেখানে নাম দেখান সেখানে id="user-name" দিন
-                    if(document.getElementById('user-name')) {
-                        document.getElementById('user-name').innerText = data.name;
-                    }
-                    // যেখানে ব্যালেন্স দেখান সেখানে id="user-balance" দিন
-                    if(document.getElementById('user-balance')) {
-                        document.getElementById('user-balance').innerText = data.balance + " ৳";
-                    }
-                }
-            })
-            .catch(err => console.log("Error fetching user data:", err));
-    }
-</script>
-
 </html>
