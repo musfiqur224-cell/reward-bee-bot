@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reward Bee - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-sm text-center">
+        <div class="w-24 h-24 bg-green-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-500/30 animate-bounce">
+            <i class="fa-solid fa-bee text-slate-900 text-5xl"></i>
+        </div>
+        <h1 class="text-3xl font-black mb-2 tracking-tight">REWARD BEE</h1>
+        <p class="text-slate-400 text-sm mb-10">টেলিগ্রাম দিয়ে লগইন করে আয় শুরু করুন</p>
+
+        <!-- Telegram Login Widget -->
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-xl">
+            <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                data-telegram-login="YOUR_BOT_USERNAME" 
+                data-size="large" 
+                data-userpic="false" 
+                data-auth-url="/auth" 
+                data-request-access="write"></script>
+            <p class="mt-4 text-[10px] text-slate-500 uppercase font-bold tracking-widest">Secure Login by Telegram</p>
+        </div>
+
+        <p class="mt-10 text-slate-600 text-[11px]">By logging in, you agree to our Terms & Privacy Policy</p>
+    </div>
+</body>
+</html>
