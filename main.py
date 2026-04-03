@@ -14,7 +14,7 @@ API_TOKEN = '8762986628:AAFDHx75rzOBJGWFp8ACTGliil2T4rItlbw'
 # কানেকশন স্ট্রিং আপডেট করা হয়েছে
 MONGODB_URI = "mongodb+srv://Musfiqur_rahman:musfiqur@cluster0.qxu7ycp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGODB_URI)
 db = client['reward_bee']
 users_collection = db['users']
 config_collection = db['config']
