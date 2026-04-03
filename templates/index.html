@@ -292,4 +292,34 @@
         }).mount('#app');
     </script>
 </body>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // টেলিগ্রাম থেকে ইউজার আইডি নেওয়া
+    const user = tg.initDataUnsafe.user;
+
+    if (user) {
+        const userId = user.id;
+
+        // আপনার API থেকে ইউজারের ডাটা (ব্যালেন্স ও নাম) নিয়ে আসা
+        fetch(`/api/get_user/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    // আপনার HTML এ যেখানে নাম দেখান সেখানে id="user-name" দিন
+                    if(document.getElementById('user-name')) {
+                        document.getElementById('user-name').innerText = data.name;
+                    }
+                    // যেখানে ব্যালেন্স দেখান সেখানে id="user-balance" দিন
+                    if(document.getElementById('user-balance')) {
+                        document.getElementById('user-balance').innerText = data.balance + " ৳";
+                    }
+                }
+            })
+            .catch(err => console.log("Error fetching user data:", err));
+    }
+</script>
+
 </html>
