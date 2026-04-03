@@ -21,27 +21,37 @@ def start(message):
     first_name = message.from_user.first_name
     
     if not users_collection.find_one({"user_id": user_id}):
-        users_collection.insert_one({"user_id": user_id, "username": first_name, "balance": 0})
+        users_collection.insert_one({
+            "user_id": user_id, 
+            "username": first_name, 
+            "balance": 0
+        })
 
     markup = telebot.types.InlineKeyboardMarkup()
     web_app_url = "https://reward-bee-bot.onrender.com" 
-    button = telebot.types.InlineKeyboardButton(text="💰 কাজ শুরু করুন", web_app=telebot.types.WebAppInfo(url=web_app_url))
+    button = telebot.types.InlineKeyboardButton(
+        text="💰 কাজ শুরু করুন", 
+        web_app=telebot.types.WebAppInfo(url=web_app_url)
+    )
     markup.add(button)
     bot.send_message(message.chat.id, f"স্বাগতম {first_name}!", reply_markup=markup)
 
-# --- ফ্লাস্ক রুট ---
+# --- ফ্লাস্ক রুট (কোনো ডাটা পাস করা হবে না, শুধু HTML ফাইল) ---
 @app.route('/')
 def index():
-    try:
-        return render_template('index.html')
-    except Exception as e:
-        return str(e) # এরর সরাসরি স্ক্রিনে দেখাবে
+    return render_template('index.html')
 
+# API: ইউজার ডাটা পাওয়ার জন্য
 @app.route('/api/get_user/<user_id>')
 def get_user(user_id):
     user = users_collection.find_one({"user_id": user_id})
     if user:
-        return jsonify({"status": "success", "name": user['username'], "balance": user['balance']})
+        return jsonify({
+            "status": "success", 
+            "name": user['username'], 
+            "balance": user['balance'],
+            "user_id": user['user_id']
+        })
     return jsonify({"status": "error"}), 404
 
 def run_bot():
@@ -49,5 +59,5 @@ def run_bot():
 
 if __name__ == "__main__":
     threading.Thread(target=run_bot, daemon=True).start()
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
