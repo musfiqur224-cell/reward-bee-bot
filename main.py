@@ -5,7 +5,7 @@ from pymongo import MongoClient
 import threading
 
 # --- কনফিগারেশন ---
-API_TOKEN = '8762986628:AAFDHx75rzOBJGWFp8ACTGliil2T4rItlbw'
+API_TOKEN = '8762986628:AAFEBHZ2x7jTNWkC8Z-BaXvGWMaS-es4K2U'
 MONGODB_URI = "mongodb+srv://Musfiqur_rahman:musfiqur@cluster0.qxu7ycp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 app = Flask(__name__)
