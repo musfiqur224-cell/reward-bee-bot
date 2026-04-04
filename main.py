@@ -59,9 +59,13 @@ def run_bot():
         print(f"Bot error: {e}")
 
 if __name__ == "__main__":
-    # বোটকে আলাদা থ্রেডে চালু করা
-    threading.Thread(target=run_bot, daemon=True).start()
+    # বোটের কোনো পুরনো পেন্ডিং রিকোয়েস্ট থাকলে তা মুছে ফেলা
+    bot.remove_webhook()
     
-    # ফ্লাস্ক রান করা (Render পোর্টে)
+    # বোটকে আলাদা থ্রেডে চালু করা
+    # non_stop=True এবং interval=1 দিলে কানেকশন আরও স্টেবল থাকে
+    threading.Thread(target=lambda: bot.infinity_polling(timeout=10, long_polling_timeout=5), daemon=True).start()
+    
+    # ফ্লাস্ক রান করা (Render-এর জন্য)
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
