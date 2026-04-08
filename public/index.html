@@ -2,58 +2,210 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel - Reward Bee</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reward Bee - Earn & Refer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+        .nav-shadow { box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-slate-100 p-5">
-    <div id="app" class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
-        <h1 class="text-2xl font-bold mb-6 text-slate-800 border-b pb-3">অ্যাডমিন প্যানেল</h1>
+<body class="bg-slate-900 text-white font-sans pb-28">
+    <div id="app" v-cloak>
         
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-bold text-slate-600">টাস্ক রিওয়ার্ড (৳)</label>
-                <input type="number" v-model="config.reward" class="w-full border p-3 rounded-lg mt-1">
+        <!-- Top Bar -->
+        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 sticky top-0 z-50 shadow-lg">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 bg-green-500 rounded-lg flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <i class="fa-solid fa-bee text-slate-900"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Reward Bee</span>
             </div>
-            <div>
-                <label class="block text-sm font-bold text-slate-600">টাস্ক লিঙ্ক</label>
-                <input type="text" v-model="config.links[0]" class="w-full border p-3 rounded-lg mt-1">
+            <div class="bg-slate-900 px-4 py-1.5 rounded-full border border-green-500/30 flex items-center gap-2">
+                <i class="fa-solid fa-coins text-yellow-400"></i>
+                <span class="font-bold text-green-400 text-sm">৳{{ user.balance }}</span>
             </div>
-            <div>
-                <label class="block text-sm font-bold text-slate-600">হোম পেজ অ্যাড কোড</label>
-                <textarea v-model="config.ads.home" class="w-full border p-3 rounded-lg mt-1" rows="3"></textarea>
+        </div>
+
+        <!-- Ad Placement: Top (Server Config Driven) -->
+        <div v-if="config.ads && config.ads.home && activePage === 'home'" class="p-2 overflow-hidden" v-html="config.ads.home"></div>
+
+        <!-- Home Page -->
+        <div v-if="activePage === 'home'" class="p-5 space-y-6">
+            <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-3xl shadow-xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-xl font-bold mb-1">হ্যালো, {{ user.name || 'ইউজার' }}!</h2>
+                    <p class="text-green-100 text-xs opacity-80">আজকের টাস্ক কমপ্লিট করে আয় বাড়ান।</p>
+                </div>
+                <i class="fa-solid fa-wallet absolute -right-4 -bottom-4 text-8xl text-white/10"></i>
             </div>
-            <div>
-                <label class="block text-sm font-bold text-slate-600">টাস্ক পেজ অ্যাড কোড</label>
-                <textarea v-model="config.ads.task" class="w-full border p-3 rounded-lg mt-1" rows="3"></textarea>
+
+            <!-- Stats (Mocked for UI flow) -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50 text-center">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">মোট আয়</p>
+                    <p class="text-xl font-black text-white">৳{{ user.balance }}</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50 text-center">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold mb-1 text-nowrap">মিনিমাম উইথড্র</p>
+                    <p class="text-xl font-black text-white">৳{{ config.minW }}</p>
+                </div>
             </div>
-            <button @click="save" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-all">
-                সব পরিবর্তন সেভ করুন
+
+            <button @click="startTask" class="w-full bg-green-500 hover:bg-green-600 py-4 rounded-2xl font-bold text-lg shadow-lg shadow-green-500/20 flex items-center justify-center gap-3 transition-all active:scale-95 group">
+                <i class="fa-solid fa-bolt group-hover:animate-pulse"></i> কাজ শুরু করুন
             </button>
         </div>
+
+        <!-- Task Page (Overlay) -->
+        <div v-if="activePage === 'task'" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col items-center justify-center p-6 text-center">
+             <div v-if="config.ads && config.ads.task" class="mb-8 w-full" v-html="config.ads.task"></div>
+             <div class="relative w-32 h-32 flex items-center justify-center mb-6">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle cx="64" cy="64" r="60" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-800" />
+                    <circle cx="64" cy="64" r="60" stroke="currentColor" stroke-width="8" fill="transparent" :stroke-dasharray="377" :stroke-dashoffset="377 - (timer/10)*377" class="text-green-500 transition-all duration-1000 ease-linear" />
+                </svg>
+                <span class="absolute text-3xl font-black">{{ timer }}</span>
+             </div>
+             <h3 class="text-xl font-bold mb-2">অ্যাড দেখা হচ্ছে...</h3>
+             <p class="text-slate-400 text-sm">টাইমার শেষ হওয়া পর্যন্ত অপেক্ষা করুন।</p>
+             
+             <!-- Claim Button (Visible when timer is 0) -->
+             <button v-if="timer <= 0" @click="completeTask" class="mt-8 bg-green-500 px-10 py-3 rounded-xl font-bold text-white shadow-lg animate-bounce">
+                রিওয়ার্ড নিন
+             </button>
+        </div>
+
+        <!-- Payment Page -->
+        <div v-if="activePage === 'payments'" class="p-5 space-y-5 animate-in slide-in-from-bottom-4 duration-300">
+            <div v-if="config.ads && config.ads.pay" class="mb-2" v-html="config.ads.pay"></div>
+            
+            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl">
+                <h3 class="text-green-500 font-bold text-lg mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-money-check-dollar"></i> টাকা উত্তোলন
+                </h3>
+                
+                <div class="space-y-4">
+                    <select v-model="withdrawMethod" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700 outline-none focus:border-green-500 text-sm">
+                        <option value="" disabled>মেথড সিলেক্ট করুন</option>
+                        <option value="Bkash">বিকাশ (Bkash)</option>
+                        <option value="Nagad">নগদ (Nagad)</option>
+                    </select>
+                    <input type="number" v-model="withdrawNum" placeholder="অ্যাকাউন্ট নাম্বার" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700 outline-none text-sm">
+                    <input type="number" v-model="withdrawAmt" :placeholder="'মিনিমাম ৳' + config.minW" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700 outline-none text-sm">
+                    <button @click="handleWithdraw" class="w-full bg-blue-600 py-4 rounded-xl font-bold shadow-lg">রিকোয়েস্ট পাঠান</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 nav-shadow z-50">
+            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
+                <i class="fa-solid fa-house-chimney text-xl"></i><span>হোম</span>
+            </button>
+            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
+                <i class="fa-solid fa-hand-holding-dollar text-xl"></i><span>পেমেন্ট</span>
+            </button>
+        </div>
+
     </div>
 
     <script>
         const { createApp, ref, onMounted } = Vue;
+
         createApp({
             setup() {
-                const config = ref({ links: [''], reward: 5, ads: { home: '', task: '' } });
+                const tg = window.Telegram.WebApp;
+                const activePage = ref('home');
+                const timer = ref(10);
+                const user = ref({ id: '', balance: 0, name: '' });
+                const config = ref({ links: [], reward: 5, minW: 500, ads: {} });
 
-                onMounted(async () => {
-                    const res = await fetch('/api/config').then(r => r.json());
-                    if(res.links) config.value = res;
-                });
+                const withdrawMethod = ref('');
+                const withdrawNum = ref('');
+                const withdrawAmt = ref('');
 
-                const save = async () => {
-                    await fetch('/api/admin/update_config', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(config.value)
-                    });
-                    alert("সফলভাবে সেভ হয়েছে!");
+                const loadData = async () => {
+                    tg.ready();
+                    tg.expand();
+                    
+                    // ১. সার্ভার থেকে কনফিগ আনা
+                    const cfgRes = await fetch('/api/config');
+                    config.value = await cfgRes.json();
+
+                    // ২. ইউজার আইডি নেওয়া (Telegram থেকে)
+                    const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user_123";
+                    user.value.name = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User";
+                    
+                    // ৩. ডাটাবেজ থেকে ইউজার ডাটা লোড
+                    const userRes = await fetch(`/api/user/${userId}`);
+                    const userData = await userRes.json();
+                    user.value.id = userData.id;
+                    user.value.balance = userData.balance;
                 };
 
-                return { config, save }
+                onMounted(loadData);
+
+                const startTask = () => {
+                    if (!config.value.links || config.value.links.length === 0) {
+                        return tg.showAlert("এখনো কোনো কাজ নেই!");
+                    }
+                    
+                    // লিংক ওপেন করা
+                    const randomLink = config.value.links[Math.floor(Math.random() * config.value.links.length)];
+                    window.open(randomLink, '_blank');
+                    
+                    activePage.value = 'task';
+                    timer.value = 10;
+
+                    const countdown = setInterval(() => {
+                        if (timer.value > 0) {
+                            timer.value--;
+                        } else {
+                            clearInterval(countdown);
+                        }
+                    }, 1000);
+                };
+
+                const completeTask = async () => {
+                    try {
+                        const res = await fetch('/api/update_balance', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: user.value.id, amount: config.value.reward })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            user.value.balance = data.balance;
+                            activePage.value = 'home';
+                            tg.showPopup({ message: `অভিনন্দন! আপনি ৳${config.value.reward} পেয়েছেন।` });
+                        }
+                    } catch (e) {
+                        tg.showAlert("রিওয়ার্ড অ্যাড হতে সমস্যা হয়েছে।");
+                    }
+                };
+
+                const handleWithdraw = () => {
+                    if (withdrawAmt.value < config.value.minW) {
+                        return tg.showAlert(`মিনিমাম ৳${config.value.minW} উইথড্র করা যাবে।`);
+                    }
+                    if (withdrawAmt.value > user.value.balance) {
+                        return tg.showAlert("আপনার ব্যালেন্স পর্যাপ্ত নয়।");
+                    }
+                    tg.showAlert("আপনার রিকোয়েস্ট সফল হয়েছে! অ্যাডমিন চেক করে পেমেন্ট করে দেবে।");
+                    // এখানে চাইলে আপনি /api/withdraw এ ডাটা পাঠাতে পারেন।
+                };
+
+                return {
+                    activePage, user, config, timer, 
+                    withdrawMethod, withdrawNum, withdrawAmt,
+                    startTask, completeTask, handleWithdraw
+                }
             }
         }).mount('#app');
     </script>
