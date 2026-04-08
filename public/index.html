@@ -10,20 +10,25 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         [v-cloak] { display: none; }
-        .iframe-container { position: fixed; inset: 0; background: #000; z-index: 200; display: flex; flex-direction: column; }
-        .top-control-bar { position: absolute; top: 0; left: 0; right: 0; background: rgba(15, 23, 42, 0.9); backdrop-blur: md; padding: 12px; z-index: 210; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; gap: 15px; }
-        .disabled-btn { opacity: 0.5; pointer-events: none; }
-        iframe { border: none; width: 100%; height: 100%; pt: 60px; } /* কন্ট্রোল বারের জন্য উপরে জায়গা রাখা হয়েছে */
+        .nav-shadow { box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3); }
+        .iframe-overlay { position: fixed; inset: 0; background: #000; z-index: 200; }
+        .task-header { 
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%); 
+            z-index: 250; width: 90%; display: flex; justify-content: center; 
+        }
+        .disabled-btn { opacity: 0.6; pointer-events: none; }
+        iframe { width: 100%; height: 100vh; border: none; }
     </style>
 </head>
 <body class="bg-slate-900 text-white font-sans pb-28">
     <div id="app" v-cloak>
         
-        <!-- Top Bar -->
-        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 sticky top-0 z-50">
+        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 sticky top-0 z-50 shadow-lg">
             <div class="flex items-center gap-2">
-                <div class="w-9 h-9 bg-green-500 rounded-lg flex items-center justify-center"><i class="fa-solid fa-bee text-slate-900"></i></div>
-                <span class="font-bold text-lg">Reward Bee</span>
+                <div class="w-9 h-9 bg-green-500 rounded-lg flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <i class="fa-solid fa-bee text-slate-900"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Reward Bee</span>
             </div>
             <div class="bg-slate-900 px-4 py-1.5 rounded-full border border-green-500/30 flex items-center gap-2">
                 <i class="fa-solid fa-coins text-yellow-400"></i>
@@ -31,58 +36,103 @@
             </div>
         </div>
 
-        <!-- Home Page -->
         <div v-if="activePage === 'home'" class="p-5 space-y-6">
-            <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-3xl shadow-xl">
-                <h2 class="text-xl font-bold mb-1">হ্যালো, {{ user.name }}!</h2>
-                <p class="text-green-100 text-xs opacity-80">টাস্ক কমপ্লিট করে আয় বাড়ান।</p>
+            <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-3xl shadow-xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-xl font-bold mb-1">হ্যালো, {{ user.name }}!</h2>
+                    <p class="text-green-100 text-xs opacity-80">আজকের টাস্ক কমপ্লিট করে আয় বাড়ান।</p>
+                </div>
+                <i class="fa-solid fa-wallet absolute -right-4 -bottom-4 text-8xl text-white/10"></i>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50 text-center">
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 text-center">
                     <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">ঘণ্টার লিমিট</p>
-                    <p class="text-xl font-black" :class="h_count >= config.hourly ? 'text-red-500' : 'text-white'">{{ h_count }}/{{ config.hourly }}</p>
+                    <p class="text-xl font-black text-white">{{ h_count }}/{{ config.hourly }}</p>
                 </div>
-                <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700/50 text-center">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">দৈনিক লিমিট</p>
-                    <p class="text-xl font-black">{{ d_count }}/{{ config.daily }}</p>
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 text-center">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold mb-1 text-nowrap">দৈনিক লিমিট</p>
+                    <p class="text-xl font-black text-white">{{ d_count }}/{{ config.daily }}</p>
                 </div>
             </div>
 
             <button @click="startTask" 
-                :class="{'disabled-btn': h_count >= config.hourly || d_count >= config.daily}"
-                class="w-full bg-green-500 py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all">
-                <i class="fa-solid fa-bolt"></i> 
-                {{ h_count >= config.hourly ? 'লিমিট শেষ' : 'কাজ শুরু করুন' }}
+                :disabled="h_count >= config.hourly"
+                :class="{'disabled-btn': h_count >= config.hourly}"
+                class="w-full bg-green-500 hover:bg-green-600 py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95 group">
+                <i class="fa-solid fa-bolt group-hover:animate-pulse"></i> 
+                {{ h_count >= config.hourly ? 'ঘণ্টার লিমিট শেষ' : 'কাজ শুরু করুন' }}
             </button>
         </div>
 
-        <!-- iFrame Task Overlay (ফুল স্ক্রিন অ্যাড) -->
-        <div v-if="isTaskRunning" class="iframe-container">
-            <!-- উপরে কন্ট্রোল বার -->
-            <div class="top-control-bar">
-                <div v-if="timer > 0" class="flex items-center gap-2 bg-red-500/20 text-red-500 px-4 py-1.5 rounded-full border border-red-500/30">
-                    <i class="fa-solid fa-clock-rotate-left animate-spin text-[10px]"></i>
-                    <span class="text-xs font-bold">অপেক্ষা করুন: {{ timer }}s</span>
+        <div v-if="activePage === 'payments'" class="p-5 space-y-5">
+            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl">
+                <h3 class="text-green-500 font-bold text-lg mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-money-check-dollar"></i> টাকা উত্তোলন
+                </h3>
+                <div class="space-y-4">
+                    <select v-model="w_method" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700 text-sm outline-none">
+                        <option value="" disabled>মেথড সিলেক্ট করুন</option>
+                        <option value="Bkash">বিকাশ</option>
+                        <option value="Nagad">নগদ</option>
+                    </select>
+                    <input type="number" v-model="w_num" placeholder="অ্যাকাউন্ট নাম্বার" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700 text-sm outline-none">
+                    <input type="number" v-model="w_amt" :placeholder="'মিনিমাম ৳' + config.minW" class="w-full bg-slate-900 p-3.5 rounded-xl border border-slate-700 text-sm outline-none">
+                    <button @click="handleWithdraw" class="w-full bg-blue-600 py-4 rounded-xl font-bold">রিকোয়েস্ট পাঠান</button>
                 </div>
-                <button v-else 
-                    @click="claimReward" 
-                    :disabled="isClaiming"
-                    :class="{'disabled-btn': isClaiming}"
-                    class="bg-green-500 px-8 py-2 rounded-full text-xs font-black shadow-lg animate-bounce flex items-center gap-2">
-                    <i class="fa-solid fa-circle-check"></i> {{ isClaiming ? 'লোডিং...' : 'রিওয়ার্ড নিন ও বন্ধ করুন' }}
+            </div>
+        </div>
+
+        <div v-if="activePage === 'profile'" class="p-5 space-y-5">
+            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 text-center relative overflow-hidden shadow-xl">
+                <div class="w-20 h-20 bg-slate-700 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl border-2 border-green-500/30">
+                    <i class="fa-solid fa-user-tie text-green-500"></i>
+                </div>
+                <h3 class="text-xl font-bold">{{ user.name }}</h3>
+                <p class="text-slate-400 text-xs mt-1">ইউজার আইডি: <span class="text-green-500 font-mono">{{ user.id }}</span></p>
+                <div class="mt-6 pt-6 border-t border-slate-700/50 flex justify-around">
+                    <div>
+                        <p class="text-slate-500 text-[10px] uppercase font-bold">ব্যালেন্স</p>
+                        <p class="text-green-500 font-bold">৳{{ user.balance }}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 text-[10px] uppercase font-bold">রেফারেল</p>
+                        <p class="text-blue-500 font-bold">০ জন</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-slate-800 p-5 rounded-3xl border border-slate-700">
+                <h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-green-500"></i> আপনার রেফার কোড
+                </h3>
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700/50 flex justify-between items-center border-dashed">
+                    <span class="text-green-500 font-mono font-bold tracking-widest text-lg">BEE{{ user.id }}</span>
+                    <button @click="tg.showAlert('কোড কপি হয়েছে!')" class="text-xs bg-slate-700 px-3 py-1 rounded-md text-slate-300">কপি</button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="isTaskRunning" class="iframe-overlay">
+            <div class="task-header">
+                <div v-if="timer > 0" class="bg-red-600 text-white px-6 py-2 rounded-full font-bold shadow-xl border border-white/20">
+                    অপেক্ষা করুন: {{ timer }}s
+                </div>
+                <button v-else-if="!isClaiming" @click="claimReward" class="bg-green-500 text-white px-8 py-2 rounded-full font-black shadow-xl animate-bounce border border-white/20">
+                    রিওয়ার্ড নিন [X]
                 </button>
             </div>
-            <!-- অ্যাড ফ্রেম -->
-            <iframe :src="currentLink" class="pt-[60px]"></iframe>
+            <iframe :src="currentLink"></iframe>
         </div>
 
-        <!-- Footer -->
-        <div v-if="!isTaskRunning" class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700">
-            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
+        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 nav-shadow z-50">
+            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px] transition-all">
                 <i class="fa-solid fa-house-chimney text-xl"></i><span>হোম</span>
             </button>
-            <button class="flex flex-col items-center gap-1 text-slate-500 text-[10px]">
+            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px] transition-all">
+                <i class="fa-solid fa-hand-holding-dollar text-xl"></i><span>পেমেন্ট</span>
+            </button>
+            <button @click="activePage = 'profile'" :class="activePage === 'profile' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px] transition-all">
                 <i class="fa-solid fa-user-astronaut text-xl"></i><span>প্রোফাইল</span>
             </button>
         </div>
@@ -105,31 +155,35 @@
                 const h_count = ref(0);
                 const d_count = ref(0);
 
+                const w_method = ref('');
+                const w_num = ref('');
+                const w_amt = ref('');
+
                 const loadData = async () => {
                     tg.ready();
+                    tg.expand();
                     try {
                         const cfgRes = await fetch('/api/config');
                         config.value = await cfgRes.json();
                         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "12345";
-                        user.value.name = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User";
+                        user.value.name = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "Musfiqur";
                         const userRes = await fetch(`/api/user/${userId}`);
                         const userData = await userRes.json();
                         user.value.id = userData.id;
                         user.value.balance = userData.balance;
                         h_count.value = userData.hourly_done || 0;
                         d_count.value = userData.daily_done || 0;
-                    } catch(e) { console.log("Init error"); }
+                    } catch(e) { console.error("Data loading failed"); }
                 };
 
                 onMounted(loadData);
 
                 const startTask = () => {
-                    if (h_count.value >= config.value.hourly) return tg.showAlert("এই ঘণ্টার লিমিট শেষ!");
+                    if (h_count.value >= config.value.hourly) return tg.showAlert("ঘণ্টার লিমিট শেষ!");
                     currentLink.value = config.value.links[Math.floor(Math.random() * config.value.links.length)];
                     isTaskRunning.value = true;
                     timer.value = 10;
                     isClaiming.value = false;
-
                     const interval = setInterval(() => {
                         if (timer.value > 0) timer.value--;
                         else clearInterval(interval);
@@ -150,15 +204,17 @@
                             user.value.balance = data.balance;
                             h_count.value++; d_count.value++;
                             isTaskRunning.value = false;
-                            tg.showPopup({ message: `৳${config.value.reward} আপনার ব্যালেন্সে যোগ হয়েছে!` });
+                            tg.showAlert(`৳${config.value.reward} রিওয়ার্ড যোগ হয়েছে!`);
                         }
-                    } catch (e) {
-                        isClaiming.value = false;
-                        tg.showAlert("আবার চেষ্টা করুন।");
-                    }
+                    } catch (e) { isClaiming.value = false; }
                 };
 
-                return { activePage, user, config, isTaskRunning, isClaiming, currentLink, timer, h_count, d_count, startTask, claimReward }
+                const handleWithdraw = () => {
+                    if (w_amt.value < config.value.minW) return tg.showAlert(`মিনিমাম ৳${config.value.minW} লাগবে!`);
+                    tg.showAlert("রিকোয়েস্ট সফল হয়েছে!");
+                };
+
+                return { tg, activePage, user, config, isTaskRunning, isClaiming, currentLink, timer, h_count, d_count, w_method, w_num, w_amt, startTask, claimReward, handleWithdraw }
             }
         }).mount('#app');
     </script>
