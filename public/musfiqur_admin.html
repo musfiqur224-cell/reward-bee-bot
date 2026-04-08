@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Reward Bee</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-slate-100 p-5">
+    <div id="app" class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+        <h1 class="text-2xl font-bold mb-6 text-slate-800 border-b pb-3">অ্যাডমিন প্যানেল</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-slate-600">টাস্ক রিওয়ার্ড (৳)</label>
+                <input type="number" v-model="config.reward" class="w-full border p-3 rounded-lg mt-1">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-slate-600">টাস্ক লিঙ্ক</label>
+                <input type="text" v-model="config.links[0]" class="w-full border p-3 rounded-lg mt-1">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-slate-600">হোম পেজ অ্যাড কোড</label>
+                <textarea v-model="config.ads.home" class="w-full border p-3 rounded-lg mt-1" rows="3"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-slate-600">টাস্ক পেজ অ্যাড কোড</label>
+                <textarea v-model="config.ads.task" class="w-full border p-3 rounded-lg mt-1" rows="3"></textarea>
+            </div>
+            <button @click="save" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition-all">
+                সব পরিবর্তন সেভ করুন
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        createApp({
+            setup() {
+                const config = ref({ links: [''], reward: 5, ads: { home: '', task: '' } });
+
+                onMounted(async () => {
+                    const res = await fetch('/api/config').then(r => r.json());
+                    if(res.links) config.value = res;
+                });
+
+                const save = async () => {
+                    await fetch('/api/admin/update_config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(config.value)
+                    });
+                    alert("সফলভাবে সেভ হয়েছে!");
+                };
+
+                return { config, save }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
