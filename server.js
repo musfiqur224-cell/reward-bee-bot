@@ -5,9 +5,11 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
-app.use(express.static('public'));
 
-// --- ১. কনফিগারেশন (আপনার ডাটা এখানে দিন) ---
+// স্ট্যাটিক ফাইল সার্ভিস করা (public ফোল্ডার থেকে)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- ১. কনফিগারেশন ---
 const MONGO_URI = "mongodb+srv://Musfiqur_rahman:musfiqur@cluster0.qxu7ycp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const BOT_TOKEN = "8762986628:AAFEBHZ2x7jTNWkC8Z-BaXvGWMaS-es4K2U"; 
 
@@ -35,7 +37,19 @@ mongoose.connect(MONGO_URI)
     })
     .catch(err => console.log("DB Connection Error: ", err));
 
-// --- ৪. API এন্ডপয়েন্টস ---
+// --- ৪. পেজ রাউটিং (এই অংশটি আপনার সমস্যা সমাধান করবে) ---
+
+// মেইন লিঙ্কে (/) গেলে শুধু index.html ওপেন হবে
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// আপনার সিক্রেট অ্যাডমিন পেজ লিঙ্ক
+app.get('/musfiqur_admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'musfiqur_admin.html'));
+});
+
+// --- ৫. API এন্ডপয়েন্টস ---
 
 app.get('/api/config', async (req, res) => {
     try {
@@ -64,8 +78,7 @@ app.post('/api/update_balance', async (req, res) => {
             { new: true }
         );
         
-        // টোকেন সেট করা থাকলে মেসেজ পাঠাবে
-        if (BOT_TOKEN && BOT_TOKEN !== "YOUR_BOT_TOKEN_HERE") {
+        if (BOT_TOKEN) {
             await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                 chat_id: userId,
                 text: `✅ <b>টাস্ক সম্পন্ন!</b>\nআপনি পেয়েছেন: ৳${amount}\nবর্তমান ব্যালেন্স: ৳${user.balance}`,
@@ -84,7 +97,7 @@ app.post('/api/musfiqur_admin/update_config', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// --- ৫. হেল্পার ফাংশন এবং সার্ভার স্টার্ট ---
+// --- ৬. হেল্পার ফাংশন এবং সার্ভার স্টার্ট ---
 
 async function seedConfig() {
     try {
