@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reward Bee - Earn & Refer</title>
+    <title>Reward Bee</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -11,109 +11,122 @@
     <style>
         [v-cloak] { display: none; }
         .nav-shadow { box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3); }
-        .iframe-overlay { position: fixed; inset: 0; background: #000; z-index: 200; }
+        .iframe-overlay { position: fixed; inset: 0; background: #0b1120; z-index: 200; }
         .task-header { 
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%); 
             z-index: 250; width: 90%; display: flex; justify-content: center; 
         }
-        .disabled-btn { opacity: 0.5; pointer-events: none; grayscale: 1; }
+        .disabled-btn { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
         iframe { width: 100%; height: 100vh; border: none; }
     </style>
 </head>
-<body class="bg-slate-900 text-white font-sans pb-28">
+<body class="bg-[#0b1120] text-white font-sans pb-28">
     <div id="app" v-cloak>
         
-        <!-- Header -->
-        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 sticky top-0 z-50">
+        <!-- Top Navigation -->
+        <div class="p-4 flex justify-between items-center border-b border-slate-800 sticky top-0 bg-[#0b1120] z-50">
             <div class="flex items-center gap-2">
-                <div class="w-9 h-9 bg-green-500 rounded-lg flex items-center justify-center">
-                    <i class="fa-solid fa-bee text-slate-900"></i>
+                <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <i class="fa-solid fa-square text-green-500 bg-green-500"></i> <!-- Logo placeholder -->
+                    <div class="w-6 h-6 bg-green-400 rounded-md"></div>
                 </div>
-                <span class="font-bold text-lg tracking-tight">Reward Bee</span>
+                <span class="font-bold text-xl tracking-tight">Reward Bee</span>
             </div>
-            <div class="bg-slate-900 px-4 py-1.5 rounded-full border border-green-500/30 flex items-center gap-2 shadow-inner">
+            <div class="bg-slate-800/50 px-4 py-2 rounded-full border border-green-500/20 flex items-center gap-2">
                 <i class="fa-solid fa-coins text-yellow-400"></i>
-                <span class="font-bold text-green-400 text-sm">৳{{ user.balance }}</span>
+                <span class="font-bold text-green-400">৳{{ user.balance }}</span>
             </div>
         </div>
 
-        <!-- Home Page -->
-        <div v-if="activePage === 'home'" class="p-5 space-y-6">
-            <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-3xl shadow-xl relative overflow-hidden">
-                <div class="relative z-10">
-                    <h2 class="text-xl font-bold mb-1">হ্যালো, {{ user.name }}!</h2>
-                    <p class="text-green-100 text-xs opacity-80">আজকের টাস্ক কমপ্লিট করে আয় বাড়ান।</p>
+        <!-- Main Content -->
+        <div class="p-5 space-y-6">
+            
+            <!-- Home Tab -->
+            <div v-if="activePage === 'home'" class="space-y-6">
+                <!-- Welcome Card -->
+                <div class="bg-green-600 p-8 rounded-[35px] shadow-xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold mb-1">হ্যালো, {{ user.name }}!</h2>
+                        <p class="text-green-100 text-sm opacity-90">আজকের টাস্ক কমপ্লিট করে আয় বাড়ান।</p>
+                    </div>
+                    <!-- Decorative Bolt -->
+                    <i class="fa-solid fa-bolt absolute right-4 bottom-[-10px] text-8xl text-black/10"></i>
                 </div>
-                <i class="fa-solid fa-bolt absolute -right-4 -bottom-4 text-8xl text-white/10"></i>
+
+                <!-- Limit Cards -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-800/40 p-8 rounded-[30px] border border-slate-700/30 text-center">
+                        <p class="text-slate-400 text-xs font-medium mb-2">ঘণ্টার লিমিট</p>
+                        <p class="text-2xl font-black text-white">{{ h_count }} / {{ config.hourly }}</p>
+                    </div>
+                    <div class="bg-slate-800/40 p-8 rounded-[30px] border border-slate-700/30 text-center">
+                        <p class="text-slate-400 text-xs font-medium mb-2">দৈনিক লিমিট</p>
+                        <p class="text-2xl font-black text-white">{{ d_count }} / {{ config.daily }}</p>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <button @click="startTask" 
+                    :disabled="h_count >= config.hourly || d_count >= config.daily"
+                    :class="{'disabled-btn': h_count >= config.hourly || d_count >= config.daily}"
+                    class="w-full bg-green-500 py-5 rounded-[25px] font-bold text-xl shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all">
+                    <i class="fa-solid fa-bolt"></i> 
+                    কাজ শুরু করুন
+                </button>
             </div>
 
-            <!-- Limits -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 text-center">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">ঘণ্টার লিমিট</p>
-                    <p class="text-xl font-black text-white">{{ h_count }}/{{ config.hourly }}</p>
-                </div>
-                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 text-center">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">দৈনিক লিমিট</p>
-                    <p class="text-xl font-black text-white">{{ d_count }}/{{ config.daily }}</p>
+            <!-- Payment Tab -->
+            <div v-if="activePage === 'payments'" class="flex flex-col items-center justify-center pt-10">
+                <div class="bg-slate-800/40 p-10 rounded-[40px] border border-slate-700/30 w-full text-center">
+                    <div class="bg-green-500/10 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fa-solid fa-wallet text-4xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">উত্তোলন সিস্টেম শীঘ্রই আসছে</h3>
                 </div>
             </div>
 
-            <!-- Action Button -->
-            <button @click="startTask" 
-                :disabled="h_count >= config.hourly || d_count >= config.daily"
-                :class="{'disabled-btn': h_count >= config.hourly || d_count >= config.daily}"
-                class="w-full bg-green-500 py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all">
-                <i class="fa-solid fa-bolt"></i> 
-                {{ h_count >= config.hourly ? 'লিমিট শেষ!' : 'কাজ শুরু করুন' }}
-            </button>
+            <!-- Profile Tab -->
+            <div v-if="activePage === 'profile'" class="space-y-6">
+                <div class="bg-slate-800/40 p-10 rounded-[40px] border border-slate-700/30 text-center relative overflow-hidden">
+                    <div class="w-24 h-24 bg-green-500/10 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-green-500/20">
+                        <i class="fa-solid fa-user text-4xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1">{{ user.name }}</h3>
+                    <p class="text-slate-400 text-sm">ID: {{ user.id }}</p>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Payments Page -->
-        <div v-if="activePage === 'payments'" class="p-5">
-            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 text-center">
-                <i class="fa-solid fa-wallet text-4xl text-green-500 mb-4"></i>
-                <h3 class="font-bold">উত্তোলন সিস্টেম শীঘ্রই আসছে</h3>
-            </div>
-        </div>
-
-        <!-- Profile Page -->
-        <div v-if="activePage === 'profile'" class="p-5">
-            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 text-center">
-                <div class="w-16 h-16 bg-slate-700 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl border border-green-500/30">
-                    <i class="fa-solid fa-user text-green-500"></i>
-                </div>
-                <h3 class="font-bold text-lg">{{ user.name }}</h3>
-                <p class="text-slate-400 text-xs">ID: {{ user.id }}</p>
-            </div>
-        </div>
-
-        <!-- Task Overlay (iFrame) -->
+        <!-- Task iFrame Overlay -->
         <div v-if="isTaskRunning" class="iframe-overlay">
             <div class="task-header">
-                <div v-if="timer > 0" class="bg-red-600 text-white px-8 py-2.5 rounded-full font-bold shadow-2xl border border-white/20">
+                <div v-if="timer > 0" class="bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-2xl">
                     অপেক্ষা করুন: {{ timer }}s
                 </div>
-                <button v-else-if="!isClaiming" @click="claimReward" class="bg-green-500 text-white px-10 py-2.5 rounded-full font-black shadow-2xl animate-bounce border border-white/20">
+                <button v-else-if="!isClaiming" @click="claimReward" class="bg-green-500 text-white px-10 py-3 rounded-full font-black shadow-2xl animate-bounce">
                     রিওয়ার্ড নিন [X]
                 </button>
-                <div v-else class="bg-green-700 text-white px-8 py-2.5 rounded-full font-bold">
-                    লোডিং...
+                <div v-else class="bg-green-700 text-white px-8 py-3 rounded-full font-bold">
+                    প্রসেসিং...
                 </div>
             </div>
             <iframe :src="currentLink"></iframe>
         </div>
 
-        <!-- Footer Nav -->
-        <div class="fixed bottom-0 w-full bg-slate-800/95 backdrop-blur-md flex justify-around pt-3 pb-8 border-t border-slate-700 nav-shadow z-50">
-            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
-                <i class="fa-solid fa-house-chimney text-xl"></i><span>হোম</span>
+        <!-- Bottom Tab Bar -->
+        <div class="fixed bottom-0 w-full bg-[#0b1120]/90 backdrop-blur-lg flex justify-around pt-4 pb-8 border-t border-slate-800 nav-shadow z-50">
+            <button @click="activePage = 'home'" :class="activePage === 'home' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 transition-all">
+                <i class="fa-solid fa-house text-2xl"></i>
+                <span class="text-[11px] font-bold">হোম</span>
             </button>
-            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
-                <i class="fa-solid fa-money-bill-transfer text-xl"></i><span>পেমেন্ট</span>
+            <button @click="activePage = 'payments'" :class="activePage === 'payments' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 transition-all">
+                <i class="fa-solid fa-money-bill-transfer text-2xl"></i>
+                <span class="text-[11px] font-bold">পেমেন্ট</span>
             </button>
-            <button @click="activePage = 'profile'" :class="activePage === 'profile' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 text-[10px]">
-                <i class="fa-solid fa-user text-xl"></i><span>প্রোফাইল</span>
+            <button @click="activePage = 'profile'" :class="activePage === 'profile' ? 'text-green-500' : 'text-slate-500'" class="flex flex-col items-center gap-1 transition-all">
+                <i class="fa-solid fa-user text-2xl"></i>
+                <span class="text-[11px] font-bold">প্রোফাইল</span>
             </button>
         </div>
 
@@ -125,8 +138,9 @@
             setup() {
                 const tg = window.Telegram.WebApp;
                 const activePage = ref('home');
-                const user = ref({ id: '', name: '', balance: 0 });
-                const config = ref({ links: [], reward: 5, hourly: 5, daily: 50 });
+                const user = ref({ id: 'Loading...', name: 'User', balance: 0 });
+                const config = ref({ links: [], reward: 5, hourly: 0, daily: 0 });
+                
                 const isTaskRunning = ref(false);
                 const isClaiming = ref(false);
                 const currentLink = ref('');
@@ -138,22 +152,23 @@
                     tg.ready();
                     tg.expand();
                     try {
-                        // ১. কনফিগ লোড
                         const cfgRes = await fetch('/api/config');
-                        config.value = await cfgRes.json();
-                        
-                        // ২. ইউজার ডাটা লোড
-                        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "12345";
-                        user.value.name = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User";
+                        const cfgData = await cfgRes.json();
+                        config.value = cfgData;
+
+                        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "6164188236";
+                        user.value.name = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "Musfiqur";
                         
                         const userRes = await fetch(`/api/user/${userId}`);
                         const userData = await userRes.json();
                         
                         user.value.id = userData.id;
                         user.value.balance = userData.balance;
-                        h_count.value = userData.hourly_done; // ব্যাকেন্ড থেকে আসা সঠিক ডাটা
-                        d_count.value = userData.daily_done;
-                    } catch(e) { console.error("Sync Error"); }
+                        h_count.value = userData.hourly_done || 0;
+                        d_count.value = userData.daily_done || 0;
+                    } catch(e) {
+                        console.error("Sync Error");
+                    }
                 };
 
                 onMounted(loadData);
@@ -164,6 +179,7 @@
                     isTaskRunning.value = true;
                     timer.value = 10;
                     isClaiming.value = false;
+                    
                     const interval = setInterval(() => {
                         if (timer.value > 0) timer.value--;
                         else clearInterval(interval);
@@ -182,14 +198,14 @@
                         const data = await res.json();
                         if (data.success) {
                             user.value.balance = data.balance;
-                            h_count.value = data.hourly_done; // ব্যাকেন্ড থেকে আপডেট নিয়ে আসা
+                            h_count.value = data.hourly_done;
                             d_count.value = data.daily_done;
                             isTaskRunning.value = false;
-                            tg.showAlert(`৳${config.value.reward} সফলভাবে যোগ হয়েছে!`);
+                            tg.showAlert(`৳${config.value.reward} রিওয়ার্ড যোগ হয়েছে!`);
                         }
-                    } catch (e) { 
+                    } catch (e) {
                         isClaiming.value = false;
-                        tg.showAlert("নেটওয়ার্ক সমস্যা!");
+                        tg.showAlert("ত্রুটি হয়েছে, আবার চেষ্টা করুন।");
                     }
                 };
 
